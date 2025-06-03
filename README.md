@@ -1,11 +1,7 @@
-# Template for Creating Web Apps Quickly! :D
+# Ya Cards
 
-## Tech Stack
+A quick-to-use cards app!
 
-- NextJS (App Router)
-- tRPC
-- Tailwind
-- Tailwind Prose
-- Iconify Tailwind
-- Shadcn
-- Clerk
+## NO ADS!!
+
+Take that, Quizlet!!
