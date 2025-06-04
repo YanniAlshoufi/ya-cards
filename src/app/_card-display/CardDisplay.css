@@ -1,0 +1,36 @@
+.flipped {
+  animation: flip 0.2s ease-in forwards;
+}
+.unflipped {
+  animation: unflip 0.2s ease-in forwards;
+}
+
+@keyframes flip {
+  from {
+    transform: scaleY(1);
+    display: block;
+  }
+  50% {
+    transform: scaleY(0);
+    display: none;
+  }
+  to {
+    transform: scaleY(1);
+    display: none;
+  }
+}
+
+@keyframes unflip {
+  from {
+    transform: scaleY(1);
+    display: none;
+  }
+  50% {
+    transform: scaleY(0);
+    display: none;
+  }
+  to {
+    transform: scaleY(1);
+    display: block;
+  }
+}

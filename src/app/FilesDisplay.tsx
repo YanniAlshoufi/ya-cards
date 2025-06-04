@@ -10,10 +10,11 @@ import {
   ContextMenuSubContent,
 } from "@/components/ui/context-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CardFile, Directory } from "@/server/api/routers/files";
+import type { Directory, File } from "@/server/api/routers/files";
 import { api } from "@/trpc/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useCurrentCardFileStore } from "./_card-display/card-display";
 
 export function FilesDisplay() {
   const { error, isLoading, data } = api.files.getAll.useQuery();
@@ -23,12 +24,12 @@ export function FilesDisplay() {
   }
 
   return (
-    <div className="flex min-w-150 flex-col gap-3">
+    <div className="flex h-full min-w-150 flex-col gap-3">
       {isLoading || data === undefined ? (
-        <Skeleton className="h-[50dvh] w-full rounded bg-gray-500 p-10" />
+        <Skeleton className="h-full w-full rounded bg-gray-500 p-10" />
       ) : (
-        <div className="w-full rounded bg-gray-600/30 p-10">
-          <FileView dir={{ ...data, isCollabsed: false }} className="w-full" />
+        <div className="h-full w-full rounded bg-gray-600/30 p-10">
+          <FileView dir={data} className="h-full w-full" isCollapsed={false} />
         </div>
       )}
     </div>
@@ -36,14 +37,14 @@ export function FilesDisplay() {
 }
 
 function FileView(props: {
-  dir: (Directory & { isCollabsed: boolean }) | CardFile;
+  dir: File;
   depth?: number;
   isNested?: boolean;
   className?: string;
+  isCollapsed?: boolean;
 }) {
-  const [isCollabsed, setIsCollabsed] = useState<boolean | null>(
-    props.dir.fileType === "directory" ? props.dir.isCollabsed : null,
-  );
+  const currentCardFileStore = useCurrentCardFileStore();
+  const [isCollabsed, setIsCollabsed] = useState(props.isCollapsed);
 
   const apiUtils = api.useUtils();
   const deleteMutation = api.files.removeById.useMutation({
@@ -86,10 +87,7 @@ function FileView(props: {
     }
   }, [addMutation?.error]);
 
-  const addFile = async (
-    fileType: (Directory | CardFile)["fileType"],
-    directory: Directory,
-  ) => {
+  const addFile = async (fileType: File["fileType"], directory: Directory) => {
     await addMutation.mutateAsync({
       fileType: fileType,
       id: directory.id,
@@ -104,7 +102,12 @@ function FileView(props: {
           <button
             className="relative flex items-center gap-3"
             style={{ marginLeft: (props.depth ?? 0) * 20 }}
-            onClick={() => setIsCollabsed(!isCollabsed)}
+            onClick={() => {
+              setIsCollabsed(!isCollabsed);
+              if (props.dir.fileType === "cards") {
+                currentCardFileStore.setCurrentCard(props.dir);
+              }
+            }}
           >
             <span className="flex">
               {props.dir.fileType === "directory" ? (
@@ -184,12 +187,9 @@ function FileView(props: {
           {props.dir.children.map((child) => (
             <div className="flex" key={child.id}>
               <FileView
-                dir={
-                  child.fileType === "directory"
-                    ? { ...child, isCollabsed: true }
-                    : child
-                }
+                dir={child}
                 depth={(props.depth ?? 0) + 1}
+                isCollapsed={true}
                 isNested={true}
               />
             </div>

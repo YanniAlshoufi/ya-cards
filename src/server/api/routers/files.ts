@@ -1,6 +1,7 @@
+import type { Prettify, UnionToTuple } from "@/lib/custom-utility-types";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
-import { randomUUID } from "node:crypto";
+import { randomUUID, type UUID } from "node:crypto";
 import { z } from "zod";
 
 export const filesRouter = createTRPCRouter({
@@ -11,7 +12,10 @@ export const filesRouter = createTRPCRouter({
   removeById: publicProcedure
     .input(
       z.object({
-        id: z.string().uuid(),
+        id: z
+          .string()
+          .uuid()
+          .transform((id) => id as UUID),
       }),
     )
     .mutation(async ({ input }) => {
@@ -35,7 +39,10 @@ export const filesRouter = createTRPCRouter({
   addToDirectoryWithId: publicProcedure
     .input(
       z.object({
-        id: z.string().uuid(),
+        id: z
+          .string()
+          .uuid()
+          .transform((id) => id as UUID),
         fileType: z.enum(["cards", "directory"]),
         name: z
           .string()
@@ -114,21 +121,32 @@ function doForAll(
   }
 }
 
-export type Id = string;
+export type Id = UUID;
 
-export type Directory = {
+export const DIRECTORY_FILE_TYPE = "directory";
+export type Directory = Prettify<{
   id: Id;
-  fileType: "directory";
+  fileType: typeof DIRECTORY_FILE_TYPE;
   name: string;
-  children: (Directory | CardFile)[];
-};
+  children: File[];
+}>;
 
+export const CARDS_FILE_TYPE = "cards";
 export type CardFile = {
   id: Id;
-  fileType: "cards";
+  fileType: typeof CARDS_FILE_TYPE;
   name: string;
   cards: Card[];
 };
+
+export type File = Prettify<Directory | CardFile>;
+export type FileType = File["fileType"];
+type FileTypeTupleType = UnionToTuple<FileType>;
+
+export const FILE_TYEPS: FileTypeTupleType = [
+  CARDS_FILE_TYPE,
+  DIRECTORY_FILE_TYPE,
+] as const;
 
 export type Card = {
   id: Id;
@@ -209,7 +227,7 @@ export const RootDirectory = {
             {
               id: randomUUID(),
               front: "Karpowicz",
-              back: "- 1984\n- Irgendwas Fahrenheit",
+              back: "- 1984\n- Fahrenheit Irgendwas",
             },
           ],
         },
